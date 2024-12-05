@@ -1,117 +1,85 @@
-class TreeNode:
-    def __init__(self, value):
-        self.left = None
-        self.value = value
-        self.right = None
+class HeapqEquivalent:
+    def __init__(self):
+        self.heap = []
 
+    def heappush(self, item):
+        self.heap.append(item)
+        self._shiftup(len(self.heap) - 1)
 
-class BinaryTee:
-    def __init__(self, root_value):
-        self.root = TreeNode(root_value)
+    def heappop(self):
+        if not self.heap:
+            raise IndexError("pop from an empty heap")
+        lastelt = self.heap.pop()
+        if not self.heap:
+            return lastelt
+        min_item = self.heap[0]
+        self.heap[0] = lastelt
+        self._siftdown(0)
+        return min_item
 
-    def insert(self, value):
-        def insert_recursive(node, value):
-            if not node:
-                return TreeNode(value)
-            if value < node.value:
-                node.left = insert_recursive(node.left, value)
-            elif value > node.value:
-                node.right = insert_recursive(node.right, value)
-            return node
+    def heapify(self, iterable):
+        self.heap = list(iterable)
+        for i in reversed(range(len(self.heap) // 2)):
+            self._siftdown(i)
 
-        self.root = insert_recursive(self.root, value)
+    def heappushpop(self, item):
+        if self.heap and item > self.heap[0]:
+            item, self.heap[0] = self.heap[0], item
+            self._siftdown(0)
+        return item
 
-    def search(self, value):
-        def search_recursive(node, value):
-            if not node:
-                return False
-            if node.value == value:
-                return True
-            elif value < node.value:
-                return search_recursive(node.left, value)
+    def heapreplace(self, item):
+        if not self.heap:
+            raise IndexError("replace on empty heap")
+        min_item = self.heap[0]
+        self.heap[0] = item
+        self._siftdown(0)
+        return min_item
+
+    def nlargest(self, n):
+        return sorted(self.heap, reverse=True)[:n]
+
+    def nsmallest(self, n):
+        return sorted(self.heap)[:n]
+
+    def _shiftup(self, pos):
+        child = pos
+        while child > 0:
+            parent = (child - 1) // 2
+            if self.heap[child] < self.heap[parent]:
+                self.heap[child], self.heap[parent] = self.heap[parent], self.heap[child]
+                child = parent
             else:
-                return search_recursive(node.right, value)
+                break
 
-        return search_recursive(self.root, value)
+    def _siftdown(self, pos):
+        end_pos = len(self.heap)
+        root = pos
+        child = 2 * root + 1
+        while child < end_pos:
+            right = child + 1
+            if right < end_pos and self.heap[right] < self.heap[child]:
+                child = right
 
-    def delete(self, value):
-        def delete_recursive(node, value):
-            if not node:
-                return node
-            if value < node.value:
-                node.left = delete_recursive(node.left, value)
-            elif value > node.value:
-                node.right = delete_recursive(node.right, value)
+            if self.heap[child] < self.heap[root]:
+                self.heap[child], self.heap[root] = self.heap[root], self.heap[child]
+                root = child
+                child = 2 * root + 1
             else:
-                if not node.left and not node.right:
-                    return None
-                elif not node.left:
-                    return node.right
-                elif not node.right:
-                    return node.left
-
-                temp = self.find_min(node.right)
-                node.value = temp.value
-                node.right = delete_recursive(node.right, temp.value)
-            return node
-
-        self.root = delete_recursive(self.root, value)
-
-    def find_min(self, node):
-        while node.left:
-            node = node.left
-        return node
-
-    def preorder_traversal(self):
-        stack = [self.root]
-        result = []
-        while stack:
-            node = stack.pop()
-            if node:
-                result.append(node.value)
-                stack.append(node.right)
-                stack.append(node.left)
-        return result
-
-    def inorder_traversal(self):
-        stack = []
-        result = []
-        current = self.root
-        while current or stack:
-            while current:
-                stack.append(current)
-                current = current.left
-            current = stack.pop()
-            result.append(current.value)
-            current = current.right
-        return result
-
-    def postorder_traversal(self):
-        stack = [self.root]
-        result = []
-        while stack:
-            node = stack.pop()
-            if node:
-                result.append(node.value)
-                stack.append(node.left)
-                stack.append(node.right)
-
-        return result[::-1]
+                break
 
 
-tree = BinaryTee(10)
-tree.insert(5)
-tree.insert(15)
-tree.insert(2)
-tree.insert(7)
-tree.insert(12)
-tree.insert(20)
+heap = HeapqEquivalent()
+heap.heappush(10)
+heap.heappush(5)
+heap.heappush(3)
+heap.heappush(8)
 
-print("탐색 (7):", tree.search(7))
-print("탐색 (17):", tree.search(17))
+print("힙의 최솟값:", heap.heappop())
+heap.heapify([7, 1, 5, 9, 3])
+print("힙에서 가장 큰 2개의 요소:", heap.nlargest(2))
+print("힙에서 가장 작은 3개의 요소:", heap.nsmallest(3))
+print("힙에 6 추가 후 최소 제거:", heap.heappushpop(6))
+print("최소를 2개로 교체 후 반환:", heap.heappushpop(2))
 
-tree.delete(15)
-
-print("전위 순회:", tree.preorder_traversal())
-print("중위 순회:", tree.inorder_traversal())
-print("후위 순회:", tree.postorder_traversal())
+print("힙 내용:", heap.heap)
